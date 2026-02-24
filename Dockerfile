@@ -1,5 +1,5 @@
-# เลือกใช้ Java 17 แบบเบาๆ (Alpine) จะได้ไม่กิน RAM เครื่อง VM เยอะ
-FROM eclipse-temurin:17-jre-alpine
+# เปลี่ยนจาก Alpine เป็นรุ่นปกติ (Ubuntu-based) ที่รองรับชิป ARM64 ของ Mac M4
+FROM eclipse-temurin:17-jre
 
 # สร้างโฟลเดอร์สำหรับทำงานข้างใน Docker
 WORKDIR /app
