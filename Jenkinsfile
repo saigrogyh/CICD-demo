@@ -97,8 +97,12 @@ pipeline {
         stage('Build & Push Image') {
             when { expression { params.ACTION == 'DEPLOY' } }
             steps {
+                // 🛑 บอสต้องมีบรรทัดนี้ก่อนสั่ง Docker Build!!
+                sh "./mvnw clean package -DskipTests"
+
                 script {
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CRED, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        // คราวนี้ Docker จะเห็นว่าไฟล์ .jar เปลี่ยนไป และจะไม่ CACHED แล้วครับ
                         sh "docker build -t ${DOCKER_IMAGE}:${env.TARGET_VER} ."
                         sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
                         sh "docker push ${DOCKER_IMAGE}:${env.TARGET_VER}"
