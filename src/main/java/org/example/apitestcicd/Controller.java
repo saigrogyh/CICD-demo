@@ -25,6 +25,10 @@ public class Controller {
         response.put("message", "Hello CI/CD Pipeline");
         response.put("server", hostname);
         response.put("yorchtaruicicd","");
+        response.put("yorchtaruicicd","");
+        response.put("yorchtaruicicd","");
+        response.put("yorchtaruicicd","");
+        response.put("yorchtaruicicd","");
 
         return response;
     }

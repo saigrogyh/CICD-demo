@@ -98,7 +98,6 @@ pipeline {
             when { expression { params.ACTION == 'DEPLOY' } }
             steps {
                 script {
-                    // ใช้คำสั่ง Shell แทนปลั๊กอิน Docker
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CRED, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh "docker build -t ${DOCKER_IMAGE}:${env.TARGET_VER} ."
                         sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
