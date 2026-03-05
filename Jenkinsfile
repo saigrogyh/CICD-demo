@@ -97,18 +97,17 @@ pipeline {
         stage('Build & Push Image') {
             when { expression { params.ACTION == 'DEPLOY' } }
             steps {
-                echo "กำลังสร้าง Image รุ่นที่ ${env.TARGET_VER}..."
-                sh "./mvnw clean package -DskipTests"
-
                 script {
-                    // Login และ Push ขึ้น Docker Hub
-                    docker.withRegistry('', env.DOCKER_HUB_CRED) {
-                        def appImage = docker.build("${env.DOCKER_IMAGE}:${env.TARGET_VER}")
-                        appImage.push()
+                    // ใช้คำสั่ง Shell แทนปลั๊กอิน Docker
+                    withCredentials([usernamePassword(credentialsId: env.DOCKER_HUB_CRED, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh "docker build -t ${DOCKER_IMAGE}:${env.TARGET_VER} ."
+                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE}:${env.TARGET_VER}"
                     }
                 }
             }
         }
+
 
         stage('Deploy to Servers') {
             steps {
