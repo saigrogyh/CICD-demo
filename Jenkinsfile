@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        // ด่านที่ 1: แวะตรวจโค้ดก่อน (Unit Test)
+        // ด่านที่ 1: ตรวจสอบความถูกต้องของโค้ด
         stage('1. Unit Test (QC Code)') {
             steps {
                 echo '🧪 กำลังรัน Unit Test เพื่อตรวจสอบความถูกต้องของลอจิก...'
@@ -11,16 +11,15 @@ pipeline {
             }
         }
 
-        // ด่านที่ 2: ประกอบร่างแอป (Build JAR)
+        // ด่านที่ 2: ประกอบร่างแอป
         stage('2. Build JAR') {
             steps {
                 echo '🚀 กำลัง Build โค้ด Spring Boot (สร้างไฟล์ .jar)...'
-                // ด่านนี้เราข้ามเทสต์ไปเลย เพราะเทสต์ผ่านจากด่าน 1 มาแล้ว
                 sh './mvnw clean package -DskipTests'
             }
         }
 
-        // ด่านที่ 3: แพ็กใส่กล่อง (Build Docker Image)
+        // ด่านที่ 3: แพ็กใส่กล่อง Docker
         stage('3. Build Docker Image') {
             steps {
                 echo '📦 กำลังเอาไฟล์ .jar ยัดใส่ Docker Image...'
@@ -28,31 +27,36 @@ pipeline {
             }
         }
 
-        // ด่านที่ 4: ไรเดอร์เอาของไปส่ง (Deploy)
-        stage('4. Deploy to VM-2 & VM-3') {
+        // ด่านที่ 4: ท่าไม้ตาย Zero Downtime (Rolling Update)
+        stage('4. Deploy') {
             steps {
-                echo '🚚 กำลังเซฟ Image และส่งไปรันที่ VM-2 และ VM-3...'
+                echo '🚚 กำลังเซฟ Image...'
                 sh 'docker save -o springboot-api.tar springboot-api:latest'
 
                 script {
+                    // รายชื่อเซิร์ฟเวอร์หลังบ้านของเรา
                     def servers = ['192.168.64.3', '192.168.64.4']
+
                     for (ip in servers) {
                         echo "======================================"
-                        echo "🚀 กำลัง Deploy ไปที่เครื่อง ${ip}..."
+                        echo "🚀 กำลัง Deploy แบบ Rolling Update ไปที่ ${ip}..."
                         echo "======================================"
 
-                        // 1. โยนไฟล์
+                        // 1. โยนไฟล์ข้ามเครื่อง
                         sh "sshpass -p 'yorchgeorge' scp -o StrictHostKeyChecking=no springboot-api.tar yorch@${ip}:/home/yorch/"
 
-                        // 2. สั่งรัน
+                        // 2. สั่งรัน + ใส่เกราะ --restart always
                         sh """
                         sshpass -p 'yorchgeorge' ssh -o StrictHostKeyChecking=no yorch@${ip} '
                             echo yorchgeorge | sudo -S docker load -i /home/yorch/springboot-api.tar &&
                             echo yorchgeorge | sudo -S docker stop springboot-api || true &&
                             echo yorchgeorge | sudo -S docker rm springboot-api || true &&
-                            echo yorchgeorge | sudo -S docker run -d -p 8080:8080 --name springboot-api springboot-api:latest
+                            echo yorchgeorge | sudo -S docker run -d -p 8080:8080 --name springboot-api --restart always springboot-api:latest
                         '
                         """
+
+                        echo "⏳ รอ 20 วินาที ให้ Spring Boot บน ${ip} พร้อมรับลูกค้า..."
+                        sleep 20
                     }
                 }
             }
