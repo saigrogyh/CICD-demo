@@ -71,8 +71,8 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ACTION', choices: ['DEPLOY', 'ROLLBACK'], description: 'บอสจะลงของใหม่หรือย้อนกลับ?')
-        string(name: 'VERSION', defaultValue: '', description: 'ถ้า Rollback ใส่เลข Build ที่ต้องการ (เช่น 1, 2)')
+        choice(name: 'ACTION', choices: ['DEPLOY', 'ROLLBACK'])
+        string(name: 'VERSION', defaultValue: '', description: 'Rollback Build No. Ex.19,20')
     }
 
     environment {
@@ -88,7 +88,7 @@ pipeline {
                     env.TARGET_VER = (params.ACTION == 'DEPLOY') ? env.BUILD_NUMBER : params.VERSION
 
                     if (params.ACTION == 'ROLLBACK' && params.VERSION == '') {
-                        error "บอสลืมใส่เลขเวอร์ชันที่จะถอยกลับครับ!"
+                        error "ลืมใส่เลขเวอร์ชันที่จะถอยกลับครับ!"
                     }
                 }
             }
@@ -134,7 +134,7 @@ pipeline {
         stage('Nginx Reload') {
             steps {
                 sh "docker exec nginx-lb nginx -s reload"
-                echo "เรียบร้อย! เข้าดูผลงานที่ Ngrok ได้เลยครับบอส"
+                echo "เรียบร้อย! เข้าดูผลงานที่ Ngrok ได้เลยครับ"
             }
         }
     }
